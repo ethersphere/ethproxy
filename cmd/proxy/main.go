@@ -12,8 +12,11 @@ func main() {
 	callback := callback.New()
 
 	callback.On(rpc.BlockByHash, func(j *rpc.JsonrpcMessage) {
-		fmt.Println(j.Method)
 		j.SetBlockNumber(12)
+	})
+
+	callback.On(rpc.BlockByHash, func(j *rpc.JsonrpcMessage) {
+		fmt.Println(j.BlockNumber())
 	})
 
 	NewProxy(callback).ListenAndServe()

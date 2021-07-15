@@ -40,8 +40,9 @@ func serverRoute(w http.ResponseWriter, r *http.Request) {
 			fmt.Printf("server: %v\n", err)
 			return
 		}
-		err = c.WriteJSON(&rpc.JsonrpcMessage{
+		err = c.WriteJSON(rpc.JsonrpcMessage{
 			Method: rpc.BlockByHash,
+			Result: []byte("10"),
 		})
 		if err != nil {
 			fmt.Printf("server: %v\n", err)

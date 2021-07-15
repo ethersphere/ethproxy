@@ -70,7 +70,7 @@ func wsRoute(call *callback.Callback) func(w http.ResponseWriter, r *http.Reques
 			}
 
 			jmsg, err := rpc.Unmarshall(msg)
-			if err != nil {
+			if err == nil {
 				call.Run(jmsg)
 			}
 
