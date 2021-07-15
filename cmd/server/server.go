@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/ethersphere/ethproxy/pkg/rpc"
 	"github.com/go-chi/chi"
 	"github.com/gorilla/websocket"
 )
@@ -11,7 +12,7 @@ import (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:    1024,
 	WriteBufferSize:   1024,
-	EnableCompression: true,
+	EnableCompression: false,
 }
 
 func NewServer() *http.Server {
@@ -34,12 +35,14 @@ func serverRoute(w http.ResponseWriter, r *http.Request) {
 	defer c.Close()
 
 	for {
-		mt, _, err := c.ReadMessage()
+		_, _, err := c.ReadMessage()
 		if err != nil {
 			fmt.Printf("server: %v\n", err)
 			return
 		}
-		err = c.WriteMessage(mt, []byte("pong"))
+		err = c.WriteJSON(&rpc.JsonrpcMessage{
+			Method: rpc.BlockByHash,
+		})
 		if err != nil {
 			fmt.Printf("server: %v\n", err)
 			return

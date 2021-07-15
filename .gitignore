@@ -1,0 +1,7 @@
+/dist
+/.idea
+/.vscode
+
+*.o
+*.a
+*.so
