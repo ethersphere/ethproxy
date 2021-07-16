@@ -2,33 +2,26 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/ethersphere/ethproxy/pkg/api"
 	"github.com/ethersphere/ethproxy/pkg/callback"
-	"github.com/ethersphere/ethproxy/pkg/rpc"
+	"github.com/ethersphere/ethproxy/pkg/proxy"
 )
 
 func main() {
 
-	// apiPort := flag.String("apiPort", "6000", "port to listen on")
+	apiPort := flag.String("apiPort", "6100", "port to listen on")
 	port := flag.String("proxyPort", "6000", "port to listen on")
 	backend := flag.String("backendEndpoint", "ws://:7000/", "backend endpoint to proxy requests")
 
 	callback := callback.New()
 
-	callback.On(rpc.BlockNumber, func(j *rpc.JsonrpcMessage) {
-		j.SetBlockNumber(12)
-	})
-
-	callback.On(rpc.BlockNumber, func(j *rpc.JsonrpcMessage) {
-		fmt.Println(j.BlockNumber())
-	})
-
-	go NewProxy(callback, *port, *backend).ListenAndServe()
-	// go NewProxy(callback, *port, *backend).ListenAndServe()
+	go log.Fatal(proxy.NewProxy(callback, *port, *backend).ListenAndServe())
+	go log.Fatal(api.NewServer(callback, *apiPort).ListenAndServe())
 
 	<-waitTerminate()
 }
