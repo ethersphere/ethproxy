@@ -16,7 +16,7 @@ func main() {
 	}
 	defer conn.Close()
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 1; i++ {
 		err := conn.WriteJSON("ping")
 		if err != nil {
 			log.Fatal(err)

@@ -41,7 +41,7 @@ func serverRoute(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		err = c.WriteJSON(rpc.JsonrpcMessage{
-			Method: rpc.BlockByHash,
+			Method: rpc.BlockNumber,
 			Result: []byte("10"),
 		})
 		if err != nil {

@@ -54,6 +54,6 @@ func Unmarshall(data json.RawMessage) (*JsonrpcMessage, error) {
 	return &msg, err
 }
 
-func Marshall(data *JsonrpcMessage) (json.RawMessage, error) {
-	return json.Marshal(data)
+func (j *JsonrpcMessage) Marshall() (json.RawMessage, error) {
+	return json.Marshal(j)
 }

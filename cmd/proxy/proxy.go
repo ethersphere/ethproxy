@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/ethersphere/ethproxy/pkg/callback"
 	"github.com/ethersphere/ethproxy/pkg/rpc"
-	"github.com/go-chi/chi"
 	"github.com/gorilla/websocket"
 )
 
@@ -16,75 +16,101 @@ var upgrader = websocket.Upgrader{
 	EnableCompression: false,
 }
 
-func NewProxy(call *callback.Callback) *http.Server {
-	r := chi.NewRouter()
+type proxy struct {
+	call            *callback.Callback
+	backendEndpoint string
+}
 
-	r.HandleFunc("/", wsRoute(call))
+func NewProxy(call *callback.Callback, port, backendEndpoing string) *http.Server {
+
+	m := http.NewServeMux()
+
+	proxy := &proxy{
+		call:            call,
+		backendEndpoint: backendEndpoing,
+	}
+
+	m.HandleFunc("/", proxy.wsRoute)
 
 	return &http.Server{
-		Addr:    ":6000",
-		Handler: r,
+		Addr:    ":" + port,
+		Handler: m,
 	}
 }
 
-func wsRoute(call *callback.Callback) func(w http.ResponseWriter, r *http.Request) {
+func (p *proxy) wsRoute(w http.ResponseWriter, r *http.Request) {
 
-	return func(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		fmt.Printf("proxy: %v\n", err)
+		return
+	}
+	defer conn.Close()
 
-		conn, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			fmt.Printf("proxy: %v\n", err)
-			return
-		}
-		defer conn.Close()
+	backend, err := p.backendClient()
+	if err != nil {
+		fmt.Printf("proxy: %v\n", err)
+		return
+	}
+	defer backend.Close()
 
-		serverClient, err := serverClient()
-		if err != nil {
-			fmt.Printf("proxy: %v\n", err)
-			return
-		}
-		defer serverClient.Close()
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-		go func() {
-			for {
-				t, msg, err := conn.ReadMessage()
-				if err != nil {
-					if _, ok := err.(*websocket.CloseError); !ok {
-						panic(err)
-					} else {
-						return
-					}
-				}
-
-				err = serverClient.WriteMessage(t, msg)
-				if err != nil {
-					panic(err)
-				}
-			}
-		}()
-
+	go func() {
 		for {
-			t, msg, err := serverClient.ReadMessage()
+			t, msg, err := conn.ReadMessage()
 			if err != nil {
-				panic(err)
+				break
 			}
 
-			jmsg, err := rpc.Unmarshall(msg)
-			if err == nil {
-				call.Run(jmsg)
+			err = backend.WriteMessage(t, msg)
+			if err != nil {
+				break
 			}
+		}
+		wg.Done()
+	}()
+
+	go func() {
+		for {
+			t, msg, err := backend.ReadMessage()
+			if err != nil {
+				break
+			}
+
+			msg = p.process(msg)
 
 			err = conn.WriteMessage(t, msg)
 			if err != nil {
-				panic(err)
+				break
 			}
 		}
-	}
+		wg.Done()
+	}()
+
+	wg.Wait()
 }
 
-func serverClient() (*websocket.Conn, error) {
-	url := fmt.Sprintf("ws://%s/", ":7000")
-	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
+func (p *proxy) process(msg []byte) []byte {
+
+	jmsg, err := rpc.Unmarshall(msg)
+	if err != nil {
+		return msg
+	}
+
+	p.call.Run(jmsg)
+
+	bjmsg, err := jmsg.Marshall()
+	if err != nil {
+		return msg
+	}
+
+	return bjmsg
+}
+
+func (p *proxy) backendClient() (*websocket.Conn, error) {
+	conn, _, err := websocket.DefaultDialer.Dial(p.backendEndpoint, nil)
 	if err != nil {
 		return nil, err
 	}
