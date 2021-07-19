@@ -55,18 +55,16 @@ func (api *Api) handler(w http.ResponseWriter, r *http.Request) {
 
 	case BlockNumberRecord:
 		api.call.On(rpc.BlockNumber, func(j *rpc.JsonrpcMessage) {
-			api.mtx.Lock()
-			defer api.mtx.Unlock()
 			bN, err := j.BlockNumber()
 			if err != nil {
 				return
 			}
+			api.mtx.Lock()
 			api.blockNumber = bN
+			api.mtx.Unlock()
 		})
 	case BlockNumberFreeze:
 		api.call.On(rpc.BlockNumber, func(j *rpc.JsonrpcMessage) {
-			api.mtx.Lock()
-			defer api.mtx.Unlock()
 			j.SetBlockNumber(api.blockNumber)
 		})
 	}

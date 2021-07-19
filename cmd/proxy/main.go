@@ -14,8 +14,8 @@ import (
 
 func main() {
 
-	apiPort := flag.String("apiPort", "6100", "port to listen on")
-	port := flag.String("proxyPort", "6000", "port to listen on")
+	apiPort := flag.String("apiPort", "6100", "api port to listen on")
+	port := flag.String("proxyPort", "6000", "proxy port to listen on")
 	backend := flag.String("backendEndpoint", "ws://:7000/", "backend endpoint to proxy requests")
 
 	callback := callback.New()
