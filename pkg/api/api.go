@@ -2,25 +2,20 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
-	"sync"
 
 	"github.com/ethersphere/ethproxy/pkg/callback"
 	"github.com/ethersphere/ethproxy/pkg/rpc"
 )
 
 type Api struct {
-	call *callback.Callback
-
-	mtx         sync.Mutex
-	blockNumber uint64
+	rpc *rpc.Caller
 }
 
-type Method string
-
 const (
-	BlockNumberFreeze Method = "blockNumberFreeze"
-	BlockNumberRecord Method = "blockNumberRecord"
+	BlockNumberFreeze = "blockNumberFreeze"
+	BlockNumberRecord = "blockNumberRecord"
 )
 
 func NewServer(call *callback.Callback, port string) *http.Server {
@@ -28,7 +23,7 @@ func NewServer(call *callback.Callback, port string) *http.Server {
 	m := http.NewServeMux()
 
 	api := &Api{
-		call: call,
+		rpc: rpc.New(call),
 	}
 
 	m.HandleFunc("/", api.handler)
@@ -40,8 +35,8 @@ func NewServer(call *callback.Callback, port string) *http.Server {
 }
 
 type RpcMessage struct {
-	Method Method          `json:"method,omitempty"`
-	Params json.RawMessage `json:"params,omitempty"`
+	Method string        `json:"method,omitempty"`
+	Params []interface{} `json:"params,omitempty"`
 }
 
 func (api *Api) handler(w http.ResponseWriter, r *http.Request) {
@@ -49,30 +44,26 @@ func (api *Api) handler(w http.ResponseWriter, r *http.Request) {
 	var msg RpcMessage
 	err := json.NewDecoder(r.Body).Decode(&msg)
 	if err != nil {
-		respond(w, http.StatusBadRequest)
+		log.Println(err)
+		respondError(w, http.StatusBadRequest, err)
 		return
 	}
 
-	switch msg.Method {
-
-	case BlockNumberRecord:
-		api.call.On(rpc.BlockNumber, func(j *rpc.JsonrpcMessage) {
-			bN, err := j.BlockNumber()
-			if err != nil {
-				return
-			}
-			api.mtx.Lock()
-			api.blockNumber = bN
-			api.mtx.Unlock()
-		})
-	case BlockNumberFreeze:
-		api.call.On(rpc.BlockNumber, func(j *rpc.JsonrpcMessage) {
-			j.SetBlockNumber(api.blockNumber)
-		})
+	err = api.rpc.Register(msg.Method, msg.Params...)
+	if err != nil {
+		log.Println(err)
+		respondError(w, http.StatusBadRequest, err)
+		return
 	}
-
 }
 
-func respond(w http.ResponseWriter, status int) {
+func respondError(w http.ResponseWriter, status int, err error) {
+
 	w.WriteHeader(status)
+
+	b, _ := json.Marshal(map[string]string{
+		"error": err.Error(),
+	})
+
+	w.Write(b)
 }

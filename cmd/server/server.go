@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ethersphere/ethproxy/pkg/rpc"
+	"github.com/ethersphere/ethproxy/pkg/ethrpc"
 	"github.com/go-chi/chi"
 	"github.com/gorilla/websocket"
 )
@@ -40,8 +40,8 @@ func serverRoute(w http.ResponseWriter, r *http.Request) {
 			fmt.Printf("server: %v\n", err)
 			return
 		}
-		err = c.WriteJSON(rpc.JsonrpcMessage{
-			Method: rpc.BlockNumber,
+		err = c.WriteJSON(ethrpc.JsonrpcMessage{
+			Method: ethrpc.BlockNumber,
 			Result: []byte("10"),
 		})
 		if err != nil {

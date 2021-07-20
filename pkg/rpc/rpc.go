@@ -1,59 +1,89 @@
 package rpc
 
 import (
-	"encoding/json"
-	"fmt"
+	"errors"
+	"sync"
+
+	"github.com/ethersphere/ethproxy/pkg/callback"
+	"github.com/ethersphere/ethproxy/pkg/ethrpc"
 )
-
-type jsonError struct {
-	Code    int         `json:"code"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
-}
-
-func (err *jsonError) Error() string {
-	if err.Message == "" {
-		return fmt.Sprintf("json-rpc error %d", err.Code)
-	}
-	return err.Message
-}
-
-type JsonrpcMessage struct {
-	Version string          `json:"jsonrpc,omitempty"`
-	ID      json.RawMessage `json:"id,omitempty"`
-	Method  string          `json:"method,omitempty"`
-	Params  json.RawMessage `json:"params,omitempty"`
-	Error   *jsonError      `json:"error,omitempty"`
-	Result  json.RawMessage `json:"result,omitempty"`
-}
 
 const (
-	BlockByHash        = "eth_getBlockByHash"
-	BlockNumber        = "eth_blockNumber"
-	TransactionReceipt = "eth_getTransactionReceipt"
+	BlockNumberFreeze = "blockNumberFreeze"
+	BlockNumberRecord = "blockNumberRecord"
 )
 
-func (j *JsonrpcMessage) BlockNumber() (uint64, error) {
-	var result uint64
-	err := json.Unmarshal(j.Result, &result)
-	return result, err
+type State struct {
+	mtx               sync.Mutex
+	BlockNumber       uint64
+	FreezeBlockNumber bool
 }
 
-func (j *JsonrpcMessage) SetBlockNumber(n uint64) error {
-	r, err := json.Marshal(n)
-	if err != nil {
-		return err
+type Caller struct {
+	call  *callback.Callback
+	state State
+}
+
+func New(call *callback.Callback) *Caller {
+	return &Caller{
+		call: call,
 	}
-	j.Result = r
+}
+
+func (c *Caller) GetState() State {
+	return c.state
+}
+
+func (c *Caller) Register(method string, params ...interface{}) error {
+	switch method {
+
+	case BlockNumberRecord:
+		c.call.On(ethrpc.BlockNumber, func(resp *callback.Response) {
+			bN, err := resp.Body.BlockNumber()
+			if err != nil {
+				return
+			}
+			if !c.frozenBlockNumber() {
+				c.state.BlockNumber = bN
+			}
+		})
+	case BlockNumberFreeze:
+		if len(params) == 0 {
+			c.freezeBlockNumber()
+			c.call.On(ethrpc.BlockNumber, func(resp *callback.Response) {
+				resp.Body.SetBlockNumber(c.state.BlockNumber)
+			})
+		} else {
+			for _, param := range params {
+				ip, ok := param.(string)
+				if !ok {
+					return errors.New("bad param")
+				}
+				func(ip string) {
+					c.call.On(ethrpc.BlockNumber, func(resp *callback.Response) {
+						if resp.IP == ip {
+							resp.Body.SetBlockNumber(c.state.BlockNumber)
+						}
+					})
+				}(ip)
+			}
+			c.freezeBlockNumber()
+		}
+	default:
+		return errors.New("bad method")
+	}
+
 	return nil
 }
 
-func Unmarshall(data json.RawMessage) (*JsonrpcMessage, error) {
-	var msg JsonrpcMessage
-	err := json.Unmarshal(data, &msg)
-	return &msg, err
+func (c *Caller) freezeBlockNumber() {
+	c.state.mtx.Lock()
+	defer c.state.mtx.Unlock()
+	c.state.FreezeBlockNumber = true
 }
 
-func (j *JsonrpcMessage) Marshall() (json.RawMessage, error) {
-	return json.Marshal(j)
+func (c *Caller) frozenBlockNumber() bool {
+	c.state.mtx.Lock()
+	defer c.state.mtx.Unlock()
+	return c.state.FreezeBlockNumber
 }

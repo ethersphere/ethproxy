@@ -15,4 +15,8 @@ proxy: dist FORCE
 dist:
 	mkdir $@
 
+.PHONY: test
+test:
+	go test -v -failfast ./...
+
 FORCE:

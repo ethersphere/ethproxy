@@ -2,11 +2,13 @@ package proxy
 
 import (
 	"fmt"
+	"log"
+	"net"
 	"net/http"
 	"sync"
 
 	"github.com/ethersphere/ethproxy/pkg/callback"
-	"github.com/ethersphere/ethproxy/pkg/rpc"
+	"github.com/ethersphere/ethproxy/pkg/ethrpc"
 	"github.com/gorilla/websocket"
 )
 
@@ -79,7 +81,10 @@ func (p *proxy) wsRoute(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 
-			msg = p.process(msg)
+			msg, err = p.process(r, msg)
+			if err != nil {
+				log.Print(err)
+			}
 
 			err = conn.WriteMessage(t, msg)
 			if err != nil {
@@ -92,21 +97,29 @@ func (p *proxy) wsRoute(w http.ResponseWriter, r *http.Request) {
 	wg.Wait()
 }
 
-func (p *proxy) process(msg []byte) []byte {
+func (p *proxy) process(r *http.Request, msg []byte) ([]byte, error) {
 
-	jmsg, err := rpc.Unmarshall(msg)
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		return msg
+		return msg, err
 	}
 
-	p.call.Run(jmsg)
+	jmsg, err := ethrpc.Unmarshall(msg)
+	if err != nil {
+		return msg, err
+	}
+
+	p.call.Run(&callback.Response{
+		Body: jmsg,
+		IP:   ip,
+	})
 
 	bjmsg, err := jmsg.Marshall()
 	if err != nil {
-		return msg
+		return msg, err
 	}
 
-	return bjmsg
+	return bjmsg, nil
 }
 
 func (p *proxy) backendClient() (*websocket.Conn, error) {

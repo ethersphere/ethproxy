@@ -3,10 +3,15 @@ package callback
 import (
 	"sync"
 
-	"github.com/ethersphere/ethproxy/pkg/rpc"
+	"github.com/ethersphere/ethproxy/pkg/ethrpc"
 )
 
-type handler func(resp *rpc.JsonrpcMessage)
+type Response struct {
+	Body *ethrpc.JsonrpcMessage
+	IP   string
+}
+
+type handler func(resp *Response)
 
 type Callback struct {
 	mtx      sync.Mutex
@@ -31,11 +36,11 @@ func (c *Callback) Remove(method string, f handler) {
 	delete(c.handlers, method)
 }
 
-func (c *Callback) Run(resp *rpc.JsonrpcMessage) {
+func (c *Callback) Run(resp *Response) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	for _, h := range c.handlers[resp.Method] {
+	for _, h := range c.handlers[resp.Body.Method] {
 		h(resp)
 	}
 }
