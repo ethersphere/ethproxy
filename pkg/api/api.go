@@ -16,9 +16,11 @@ type Api struct {
 	blockNumber uint64
 }
 
+type Method string
+
 const (
-	BlockNumberFreeze = "blockNumberFreeze"
-	BlockNumberRecord = "blockNumberRecord"
+	BlockNumberFreeze Method = "blockNumberFreeze"
+	BlockNumberRecord Method = "blockNumberRecord"
 )
 
 func NewServer(call *callback.Callback, port string) *http.Server {
@@ -38,7 +40,7 @@ func NewServer(call *callback.Callback, port string) *http.Server {
 }
 
 type RpcMessage struct {
-	Method string          `json:"method,omitempty"`
+	Method Method          `json:"method,omitempty"`
 	Params json.RawMessage `json:"params,omitempty"`
 }
 

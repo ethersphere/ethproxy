@@ -24,7 +24,7 @@ func NewClient(endpoint string) *Client {
 	}
 }
 
-func (c *Client) Execute(method string, args ...interface{}) error {
+func (c *Client) Execute(method api.Method, args ...interface{}) error {
 
 	b, err := json.Marshal(api.RpcMessage{
 		Method: method,
