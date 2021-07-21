@@ -1,3 +1,7 @@
+// Copyright 2021 The Swarm Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package proxy
 
 import (
@@ -66,6 +70,8 @@ func (p *proxy) wsRoute(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 
+			fmt.Printf("CLIENT %v\n", string(msg))
+
 			err = backend.WriteMessage(t, msg)
 			if err != nil {
 				break
@@ -80,6 +86,8 @@ func (p *proxy) wsRoute(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				break
 			}
+
+			fmt.Printf("BACKEND %v\n", string(msg))
 
 			msg, err = p.process(r, msg)
 			if err != nil {

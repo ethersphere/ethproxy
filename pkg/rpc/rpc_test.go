@@ -1,3 +1,7 @@
+// Copyright 2021 The Swarm Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package rpc_test
 
 import (
@@ -16,7 +20,7 @@ func TestBlockNumberRecord(t *testing.T) {
 		blockN uint64 = 10
 	)
 
-	err := r.Register(rpc.BlockNumberRecord)
+	err := r.Execute(rpc.BlockNumberRecord)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +48,7 @@ func TestBlockNumberFreeze(t *testing.T) {
 		blockN uint64 = 10
 	)
 
-	err := r.Register(rpc.BlockNumberRecord)
+	err := r.Execute(rpc.BlockNumberRecord)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,7 +63,7 @@ func TestBlockNumberFreeze(t *testing.T) {
 	resp.Body.SetBlockNumber(blockN)
 	call.Run(resp)
 
-	err = r.Register(rpc.BlockNumberFreeze, ip)
+	err = r.Execute(rpc.BlockNumberFreeze, ip)
 	if err != nil {
 		t.Fatal(err)
 	}

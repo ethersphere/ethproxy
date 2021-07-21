@@ -1,3 +1,7 @@
+// Copyright 2021 The Swarm Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package main
 
 import (
@@ -19,8 +23,8 @@ func main() {
 
 	callback := callback.New()
 
-	go log.Fatal(proxy.NewProxy(callback, port, backend).ListenAndServe())
-	go log.Fatal(api.NewServer(callback, apiPort).ListenAndServe())
+	go func() { log.Fatal(proxy.NewProxy(callback, port, backend).ListenAndServe()) }()
+	go func() { log.Fatal(api.NewServer(callback, apiPort).ListenAndServe()) }()
 
 	<-waitTerminate()
 }

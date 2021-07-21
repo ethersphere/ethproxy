@@ -1,3 +1,7 @@
+// Copyright 2021 The Swarm Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package rpc
 
 import (
@@ -34,7 +38,7 @@ func (c *Caller) GetState() State {
 	return c.state
 }
 
-func (c *Caller) Register(method string, params ...interface{}) error {
+func (c *Caller) Execute(method string, params ...interface{}) error {
 	switch method {
 
 	case BlockNumberRecord:

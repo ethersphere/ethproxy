@@ -1,3 +1,7 @@
+// Copyright 2021 The Swarm Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package client
 
 import (
@@ -8,9 +12,20 @@ import (
 	"time"
 
 	"github.com/ethersphere/ethproxy/pkg/api"
+	"github.com/ethersphere/ethproxy/pkg/rpc"
 )
 
 var ErrStatusNotOK = errors.New("not STATUSOK")
+
+const (
+	BlockNumberFreeze = rpc.BlockNumberFreeze
+	BlockNumberRecord = rpc.BlockNumberRecord
+)
+
+type State struct {
+	BlockNumber       uint64
+	FreezeBlockNumber bool
+}
 
 type Client struct {
 	endpoint string
@@ -34,7 +49,7 @@ func (c *Client) Execute(method string, params ...interface{}) error {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", c.endpoint, bytes.NewReader(b))
+	req, err := http.NewRequest("POST", c.endpoint+"/", bytes.NewReader(b))
 	if err != nil {
 		return err
 	}
@@ -50,4 +65,27 @@ func (c *Client) Execute(method string, params ...interface{}) error {
 	}
 
 	return nil
+}
+
+func (c *Client) State() (*State, error) {
+
+	req, err := http.NewRequest("GET", c.endpoint+"/state", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := c.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	var state State
+
+	json.NewDecoder(res.Body).Decode(&state)
+	if err != nil {
+		return nil, err
+	}
+
+	return &state, nil
 }
