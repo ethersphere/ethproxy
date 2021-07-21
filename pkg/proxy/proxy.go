@@ -64,27 +64,28 @@ func (p *proxy) wsRoute(w http.ResponseWriter, r *http.Request) {
 	wg.Add(2)
 
 	go func() {
+		defer wg.Done()
 		for {
 			t, msg, err := conn.ReadMessage()
 			if err != nil {
-				break
+				return
 			}
 
 			fmt.Printf("CLIENT %v\n", string(msg))
 
 			err = backend.WriteMessage(t, msg)
 			if err != nil {
-				break
+				return
 			}
 		}
-		wg.Done()
 	}()
 
 	go func() {
+		defer wg.Done()
 		for {
 			t, msg, err := backend.ReadMessage()
 			if err != nil {
-				break
+				return
 			}
 
 			fmt.Printf("BACKEND %v\n", string(msg))
@@ -96,10 +97,9 @@ func (p *proxy) wsRoute(w http.ResponseWriter, r *http.Request) {
 
 			err = conn.WriteMessage(t, msg)
 			if err != nil {
-				break
+				return
 			}
 		}
-		wg.Done()
 	}()
 
 	wg.Wait()

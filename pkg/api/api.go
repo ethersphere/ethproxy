@@ -8,14 +8,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/ethersphere/ethproxy"
 	"github.com/ethersphere/ethproxy/pkg/callback"
 	"github.com/ethersphere/ethproxy/pkg/rpc"
+	"github.com/go-chi/chi"
 )
 
 type Api struct {
-	rpc *rpc.Caller
+	rpc  *rpc.Caller
+	call *callback.Callback
 }
 
 const (
@@ -29,22 +32,23 @@ const (
 
 func NewServer(call *callback.Callback, port string) *http.Server {
 
-	m := http.NewServeMux()
-
 	api := &Api{
-		rpc: rpc.New(call),
+		rpc:  rpc.New(call),
+		call: call,
 	}
+	r := chi.NewRouter()
 
-	m.HandleFunc("/health", api.status)
-	m.HandleFunc("/readiness", api.status)
-	m.HandleFunc("/state", api.state)
-	m.HandleFunc("/", api.handler)
+	r.Get("/health", api.status)
+	r.Get("/readiness", api.status)
+	r.Get("/state", api.state)
+	r.Post("/execute", api.execute)
+	r.Delete("/cancel/{ID}", api.cancel)
 
 	fmt.Printf("API listing on %v\n", port)
 
 	return &http.Server{
 		Addr:    ":" + port,
-		Handler: m,
+		Handler: r,
 	}
 }
 
@@ -53,7 +57,7 @@ type RpcMessage struct {
 	Params []interface{} `json:"params,omitempty"`
 }
 
-func (api *Api) handler(w http.ResponseWriter, r *http.Request) {
+func (api *Api) execute(w http.ResponseWriter, r *http.Request) {
 
 	var msg RpcMessage
 	err := json.NewDecoder(r.Body).Decode(&msg)
@@ -62,11 +66,24 @@ func (api *Api) handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = api.rpc.Execute(msg.Method, msg.Params...)
+	id, err := api.rpc.Execute(msg.Method, msg.Params...)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err)
 		return
 	}
+
+	respond(w, map[string]int{"handler": id})
+}
+
+func (api *Api) cancel(w http.ResponseWriter, r *http.Request) {
+
+	idStr := chi.URLParam(r, "ID")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err)
+	}
+
+	api.call.Cancel(int(id))
 }
 
 func (api *Api) state(w http.ResponseWriter, r *http.Request) {

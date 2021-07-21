@@ -15,36 +15,47 @@ type Response struct {
 	IP   string
 }
 
-type handler func(resp *Response)
+type handlerFunc func(resp *Response)
+
+type handler struct {
+	f      handlerFunc
+	method string
+}
 
 type Callback struct {
-	mtx      sync.Mutex
-	handlers map[string][]handler
+	sync.Mutex
+	id       int
+	handlers map[int]handler
 }
 
 func New() *Callback {
 	return &Callback{
-		handlers: make(map[string][]handler),
+		handlers: make(map[int]handler),
 	}
 }
 
-func (c *Callback) On(method string, f handler) {
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
-	c.handlers[method] = append(c.handlers[method], f)
+func (c *Callback) On(method string, f handlerFunc) int {
+	c.Lock()
+	defer c.Unlock()
+	defer func() { c.id++ }()
+
+	c.handlers[c.id] = handler{f: f, method: method}
+	return c.id
 }
 
-func (c *Callback) Remove(method string, f handler) {
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
-	delete(c.handlers, method)
+func (c *Callback) Cancel(id int) {
+	c.Lock()
+	defer c.Unlock()
+	delete(c.handlers, id)
 }
 
 func (c *Callback) Run(resp *Response) {
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
+	c.Lock()
+	defer c.Unlock()
 
-	for _, h := range c.handlers[resp.Body.Method] {
-		h(resp)
+	for _, h := range c.handlers {
+		if h.method == resp.Body.Method {
+			h.f(resp)
+		}
 	}
 }

@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	BlockNumberFreeze = "blockNumberFreeze"
-	BlockNumberRecord = "blockNumberRecord"
+	BlockNumberFreeze   = "blockNumberFreeze"
+	BlockNumberUnfreeze = "blockNumberUnfreeze"
+	BlockNumberRecord   = "blockNumberRecord"
 )
 
 type State struct {
@@ -32,12 +33,12 @@ func New(call *callback.Callback) *Caller {
 	}
 }
 
-func (c *Caller) Execute(method string, params ...interface{}) error {
+func (c *Caller) Execute(method string, params ...interface{}) (int, error) {
 	switch method {
 
 	case BlockNumberRecord:
 
-		c.call.On(ethrpc.BlockNumber, func(resp *callback.Response) {
+		return c.call.On(ethrpc.BlockNumber, func(resp *callback.Response) {
 			bN, err := resp.Body.BlockNumber()
 			if err != nil {
 				return
@@ -46,39 +47,61 @@ func (c *Caller) Execute(method string, params ...interface{}) error {
 			if !c.state.FrozenBlockNumber {
 				c.state.BlockNumber = bN
 			}
-		})
+		}), nil
+
+	case BlockNumberUnfreeze:
+		c.state.FrozenBlockNumber = false
 
 	case BlockNumberFreeze:
 
 		if len(params) == 0 {
 			c.state.FrozenBlockNumber = true
-			c.call.On(ethrpc.BlockNumber, func(resp *callback.Response) {
+			return c.call.On(ethrpc.BlockNumber, func(resp *callback.Response) {
 				resp.Body.SetBlockNumber(c.state.BlockNumber)
-			})
+			}), nil
 		} else {
-			for _, param := range params {
-				ip, ok := param.(string)
-				if !ok {
-					return errors.New("bad param")
-				}
-				func(ip string) {
-					c.call.On(ethrpc.BlockNumber, func(resp *callback.Response) {
+
+			ips, err := stringArray(params)
+			if err != nil {
+				return 0, err
+			}
+
+			c.state.FrozenBlockNumber = true
+			return func(ips []string) int {
+				return c.call.On(ethrpc.BlockNumber, func(resp *callback.Response) {
+
+					for _, ip := range ips {
 						if resp.IP == ip {
 							resp.Body.SetBlockNumber(c.state.BlockNumber)
 						}
-					})
-				}(ip)
-			}
-			c.state.FrozenBlockNumber = true
+
+					}
+				})
+			}(ips), nil
 		}
 
 	default:
-		return errors.New("bad method")
+		return 0, errors.New("bad method")
 	}
 
-	return nil
+	return 0, nil
 }
 
 func (c *Caller) GetState() State {
 	return c.state
+}
+
+func stringArray(args []interface{}) ([]string, error) {
+
+	ret := make([]string, len(args))
+
+	for _, arg := range args {
+		str, ok := arg.(string)
+		if !ok {
+			return nil, errors.New("bad param")
+		}
+		ret = append(ret, str)
+	}
+
+	return ret, nil
 }
