@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -49,7 +50,27 @@ func (c *Client) Execute(method string, params ...interface{}) error {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", c.endpoint+"/", bytes.NewReader(b))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/execute", c.endpoint), bytes.NewReader(b))
+	if err != nil {
+		return err
+	}
+
+	res, err := c.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return ErrStatusNotOK
+	}
+
+	return nil
+}
+
+func (c *Client) Cancel(id int) error {
+
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/cancel/%d", c.endpoint, id), nil)
 	if err != nil {
 		return err
 	}
