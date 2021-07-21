@@ -3,7 +3,7 @@
 To run the example client, proxy, and backend:
 
 - `make binary`
-- `./dist/server`
+- `./dist/backend`
 - `PROXY_BACKEND_ENDPOINT=ws://localhost:7000 ./dist/proxy`
 - `./dist/client`
 

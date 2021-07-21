@@ -7,7 +7,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/ethersphere/ethproxy"
@@ -59,31 +58,19 @@ func (api *Api) handler(w http.ResponseWriter, r *http.Request) {
 	var msg RpcMessage
 	err := json.NewDecoder(r.Body).Decode(&msg)
 	if err != nil {
-		log.Println(err)
 		respondError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	err = api.rpc.Execute(msg.Method, msg.Params...)
 	if err != nil {
-		log.Println(err)
 		respondError(w, http.StatusBadRequest, err)
 		return
 	}
 }
 
 func (api *Api) state(w http.ResponseWriter, r *http.Request) {
-
-	b, err := json.Marshal(api.rpc.GetState())
-	if err != nil {
-		log.Println(err)
-		respondError(w, http.StatusBadRequest, err)
-		return
-	}
-
-	w.Header().Set("Content-Type", JSONContent)
-
-	w.Write(b)
+	respond(w, api.rpc.GetState())
 }
 
 type statusResponse struct {
@@ -92,25 +79,27 @@ type statusResponse struct {
 }
 
 func (api *Api) status(w http.ResponseWriter, r *http.Request) {
-
-	w.Header().Set("Content-Type", JSONContent)
-
-	b, _ := json.Marshal(statusResponse{
+	respond(w, statusResponse{
 		Status:  "ok",
 		Version: ethproxy.Version,
 	})
-
-	w.Write(b)
 }
 
-func respondError(w http.ResponseWriter, status int, err error) {
+func respond(w http.ResponseWriter, body interface{}) error {
 
-	w.WriteHeader(status)
 	w.Header().Set("Content-Type", JSONContent)
 
-	b, _ := json.Marshal(map[string]string{
-		"error": err.Error(),
-	})
+	b, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
 
-	w.Write(b)
+	_, err = w.Write(b)
+	return err
+}
+
+func respondError(w http.ResponseWriter, status int, err error) error {
+
+	w.WriteHeader(status)
+	return respond(w, map[string]string{"error": err.Error()})
 }

@@ -6,7 +6,6 @@ package rpc
 
 import (
 	"errors"
-	"sync"
 
 	"github.com/ethersphere/ethproxy/pkg/callback"
 	"github.com/ethersphere/ethproxy/pkg/ethrpc"
@@ -18,9 +17,8 @@ const (
 )
 
 type State struct {
-	mtx               sync.Mutex
 	BlockNumber       uint64
-	FreezeBlockNumber bool
+	FrozenBlockNumber bool
 }
 
 type Caller struct {
@@ -34,26 +32,26 @@ func New(call *callback.Callback) *Caller {
 	}
 }
 
-func (c *Caller) GetState() State {
-	return c.state
-}
-
 func (c *Caller) Execute(method string, params ...interface{}) error {
 	switch method {
 
 	case BlockNumberRecord:
+
 		c.call.On(ethrpc.BlockNumber, func(resp *callback.Response) {
 			bN, err := resp.Body.BlockNumber()
 			if err != nil {
 				return
 			}
-			if !c.frozenBlockNumber() {
+
+			if !c.state.FrozenBlockNumber {
 				c.state.BlockNumber = bN
 			}
 		})
+
 	case BlockNumberFreeze:
+
 		if len(params) == 0 {
-			c.freezeBlockNumber()
+			c.state.FrozenBlockNumber = true
 			c.call.On(ethrpc.BlockNumber, func(resp *callback.Response) {
 				resp.Body.SetBlockNumber(c.state.BlockNumber)
 			})
@@ -71,8 +69,9 @@ func (c *Caller) Execute(method string, params ...interface{}) error {
 					})
 				}(ip)
 			}
-			c.freezeBlockNumber()
+			c.state.FrozenBlockNumber = true
 		}
+
 	default:
 		return errors.New("bad method")
 	}
@@ -80,14 +79,6 @@ func (c *Caller) Execute(method string, params ...interface{}) error {
 	return nil
 }
 
-func (c *Caller) freezeBlockNumber() {
-	c.state.mtx.Lock()
-	defer c.state.mtx.Unlock()
-	c.state.FreezeBlockNumber = true
-}
-
-func (c *Caller) frozenBlockNumber() bool {
-	c.state.mtx.Lock()
-	defer c.state.mtx.Unlock()
-	return c.state.FreezeBlockNumber
+func (c *Caller) GetState() State {
+	return c.state
 }

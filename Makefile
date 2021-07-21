@@ -4,7 +4,7 @@
 binary: export CGO_ENABLED=0
 binary: dist FORCE
 	go build -o ./dist/client ./cmd/client
-	go build -o ./dist/server ./cmd/server
+	go build -o ./dist/backend ./cmd/backend
 	go build -o ./dist/proxy ./cmd/proxy
 
 .PHONY: proxy
@@ -17,6 +17,6 @@ dist:
 
 .PHONY: test
 test:
-	go test -v -failfast ./...
+	go test -v -failfast -count 1 ./...
 
 FORCE:

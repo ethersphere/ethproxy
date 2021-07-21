@@ -7,6 +7,8 @@ package ethrpc
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 type jsonError struct {
@@ -38,17 +40,14 @@ const (
 )
 
 func (j *JsonrpcMessage) BlockNumber() (uint64, error) {
-	var result uint64
+	var result hexutil.Uint64
 	err := json.Unmarshal(j.Result, &result)
-	return result, err
+	return uint64(result), err
 }
 
 func (j *JsonrpcMessage) SetBlockNumber(n uint64) error {
-	r, err := json.Marshal(n)
-	if err != nil {
-		return err
-	}
-	j.Result = r
+	var hexN hexutil.Uint64 = hexutil.Uint64(n)
+	j.Result = json.RawMessage(fmt.Sprintf(`"%s"`, hexN.String()))
 	return nil
 }
 
