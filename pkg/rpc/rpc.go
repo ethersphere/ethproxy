@@ -18,8 +18,7 @@ const (
 )
 
 type State struct {
-	BlockNumber       uint64
-	FrozenBlockNumber bool
+	BlockNumber uint64
 }
 
 type Caller struct {
@@ -44,18 +43,12 @@ func (c *Caller) Execute(method string, params ...interface{}) (int, error) {
 				return
 			}
 
-			if !c.state.FrozenBlockNumber {
-				c.state.BlockNumber = bN
-			}
+			c.state.BlockNumber = bN
 		}), nil
-
-	case BlockNumberUnfreeze:
-		c.state.FrozenBlockNumber = false
 
 	case BlockNumberFreeze:
 
 		if len(params) == 0 {
-			c.state.FrozenBlockNumber = true
 			return c.call.On(ethrpc.BlockNumber, func(resp *callback.Response) {
 				resp.Body.SetBlockNumber(c.state.BlockNumber)
 			}), nil
@@ -66,15 +59,12 @@ func (c *Caller) Execute(method string, params ...interface{}) (int, error) {
 				return 0, err
 			}
 
-			c.state.FrozenBlockNumber = true
 			return func(ips []string) int {
 				return c.call.On(ethrpc.BlockNumber, func(resp *callback.Response) {
-
 					for _, ip := range ips {
 						if resp.IP == ip {
 							resp.Body.SetBlockNumber(c.state.BlockNumber)
 						}
-
 					}
 				})
 			}(ips), nil
@@ -83,8 +73,6 @@ func (c *Caller) Execute(method string, params ...interface{}) (int, error) {
 	default:
 		return 0, errors.New("bad method")
 	}
-
-	return 0, nil
 }
 
 func (c *Caller) GetState() State {

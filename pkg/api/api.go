@@ -72,7 +72,7 @@ func (api *Api) execute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respond(w, map[string]int{"handler": id})
+	respond(w, map[string]int{"id": id})
 }
 
 func (api *Api) cancel(w http.ResponseWriter, r *http.Request) {

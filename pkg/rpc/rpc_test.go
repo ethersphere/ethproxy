@@ -39,7 +39,7 @@ func TestBlockNumberRecord(t *testing.T) {
 	}
 }
 
-func TestBlockNumberFreeze(t *testing.T) {
+func TestBlockNumberRecordCancel(t *testing.T) {
 
 	var (
 		call          = callback.New()
@@ -48,7 +48,7 @@ func TestBlockNumberFreeze(t *testing.T) {
 		blockN uint64 = 10
 	)
 
-	_, err := r.Execute(rpc.BlockNumberRecord)
+	recordID, err := r.Execute(rpc.BlockNumberRecord)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,42 +63,12 @@ func TestBlockNumberFreeze(t *testing.T) {
 	resp.Body.SetBlockNumber(blockN)
 	call.Run(resp)
 
+	call.Cancel(recordID)
+
 	_, err = r.Execute(rpc.BlockNumberFreeze, ip)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	resp.Body.SetBlockNumber(blockN + 1)
-	call.Run(resp)
-
-	if r.GetState().BlockNumber != blockN {
-		t.Fatalf("got %v, expected %v", r.GetState().BlockNumber, blockN)
-	}
-}
-
-func TestCancel(t *testing.T) {
-
-	var (
-		call          = callback.New()
-		r             = rpc.New(call)
-		blockN uint64 = 10
-	)
-
-	id, err := r.Execute(rpc.BlockNumberRecord)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	resp := &callback.Response{
-		Body: &ethrpc.JsonrpcMessage{
-			Method: ethrpc.BlockNumber,
-		},
-	}
-
-	resp.Body.SetBlockNumber(blockN)
-	call.Run(resp)
-
-	call.Cancel(id)
 
 	resp.Body.SetBlockNumber(blockN + 1)
 	call.Run(resp)

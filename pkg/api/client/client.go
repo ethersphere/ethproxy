@@ -23,11 +23,6 @@ const (
 	BlockNumberRecord = rpc.BlockNumberRecord
 )
 
-type State struct {
-	BlockNumber       uint64
-	FreezeBlockNumber bool
-}
-
 type Client struct {
 	endpoint string
 	client   *http.Client
@@ -40,32 +35,38 @@ func NewClient(endpoint string) *Client {
 	}
 }
 
-func (c *Client) Execute(method string, params ...interface{}) error {
+func (c *Client) Execute(method string, params ...interface{}) (int, error) {
 
 	b, err := json.Marshal(api.RpcMessage{
 		Method: method,
 		Params: params,
 	})
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/execute", c.endpoint), bytes.NewReader(b))
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	res, err := c.client.Do(req)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return ErrStatusNotOK
+		return 0, ErrStatusNotOK
 	}
 
-	return nil
+	var idmap = make(map[string]int)
+	err = json.NewDecoder(res.Body).Decode(&idmap)
+	if err != nil {
+		return 0, err
+	}
+
+	return idmap["id"], nil
 }
 
 func (c *Client) Cancel(id int) error {
@@ -88,7 +89,7 @@ func (c *Client) Cancel(id int) error {
 	return nil
 }
 
-func (c *Client) State() (*State, error) {
+func (c *Client) State() (*rpc.State, error) {
 
 	req, err := http.NewRequest("GET", c.endpoint+"/state", nil)
 	if err != nil {
@@ -101,8 +102,7 @@ func (c *Client) State() (*State, error) {
 	}
 	defer res.Body.Close()
 
-	var state State
-
+	var state rpc.State
 	json.NewDecoder(res.Body).Decode(&state)
 	if err != nil {
 		return nil, err
