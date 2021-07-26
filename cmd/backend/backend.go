@@ -5,11 +5,9 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethersphere/ethproxy/pkg/ethrpc"
 	"github.com/go-chi/chi"
 	"github.com/gorilla/websocket"
@@ -40,21 +38,31 @@ func serverRoute(w http.ResponseWriter, r *http.Request) {
 	}
 	defer c.Close()
 
-	var blockN = 0
-
 	for {
-		_, _, err := c.ReadMessage()
+		_, msg, err := c.ReadMessage()
 		if err != nil {
 			fmt.Printf("server: %v\n", err)
 			return
 		}
 
-		blockN++
+		jmsg, err := ethrpc.Unmarshall(msg)
+		if err != nil {
+			return
+		}
 
-		err = c.WriteJSON(ethrpc.JsonrpcMessage{
-			Method: ethrpc.BlockNumber,
-			Result: json.RawMessage(fmt.Sprintf(`"%s"`, hexutil.Uint64(blockN).String())),
-		})
+		id, err := jmsg.GetID()
+		if err != nil {
+			return
+		}
+
+		resp := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"result":"0x3ec"}`, id))
+
+		err = c.WriteMessage(websocket.BinaryMessage, resp)
+
+		// err = c.WriteJSON(ethrpc.JsonrpcMessage{
+		// 	Method: ethrpc.BlockNumber,
+		// 	Result: json.RawMessage(fmt.Sprintf(`"%s"`, hexutil.Uint64(blockN).String())),
+		// })
 		if err != nil {
 			fmt.Printf("server: %v\n", err)
 			return

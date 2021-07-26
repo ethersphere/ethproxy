@@ -12,9 +12,8 @@ import (
 )
 
 const (
-	BlockNumberFreeze   = "blockNumberFreeze"
-	BlockNumberUnfreeze = "blockNumberUnfreeze"
-	BlockNumberRecord   = "blockNumberRecord"
+	BlockNumberRecord = "blockNumberRecord"
+	BlockNumberFreeze = "blockNumberFreeze"
 )
 
 type State struct {

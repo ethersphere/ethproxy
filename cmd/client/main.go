@@ -21,7 +21,7 @@ func main() {
 	defer conn.Close()
 
 	for i := 0; i < 10; i++ {
-		err := conn.WriteJSON("ping")
+		err := conn.WriteMessage(websocket.BinaryMessage, []byte(fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_blockNumber"}`, i)))
 		if err != nil {
 			log.Fatal(err)
 		}

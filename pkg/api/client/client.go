@@ -19,8 +19,8 @@ import (
 var ErrStatusNotOK = errors.New("not STATUSOK")
 
 const (
-	BlockNumberFreeze = rpc.BlockNumberFreeze
 	BlockNumberRecord = rpc.BlockNumberRecord
+	BlockNumberFreeze = rpc.BlockNumberFreeze
 )
 
 type Client struct {

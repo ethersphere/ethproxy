@@ -45,6 +45,12 @@ func (j *JsonrpcMessage) BlockNumber() (uint64, error) {
 	return uint64(result), err
 }
 
+func (j *JsonrpcMessage) GetID() (uint64, error) {
+	var result uint64
+	err := json.Unmarshal(j.ID, &result)
+	return result, err
+}
+
 func (j *JsonrpcMessage) SetBlockNumber(n uint64) error {
 	var hexN hexutil.Uint64 = hexutil.Uint64(n)
 	j.Result = json.RawMessage(fmt.Sprintf(`"%s"`, hexN.String()))

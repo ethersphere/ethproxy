@@ -5,6 +5,7 @@
 package proxy
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -23,6 +24,8 @@ var upgrader = websocket.Upgrader{
 }
 
 type proxy struct {
+	sync.Mutex
+	methods         map[uint64]string
 	call            *callback.Callback
 	backendEndpoint string
 }
@@ -32,6 +35,7 @@ func NewProxy(call *callback.Callback, port, backendEndpoing string) *http.Serve
 	m := http.NewServeMux()
 
 	proxy := &proxy{
+		methods:         make(map[uint64]string),
 		call:            call,
 		backendEndpoint: backendEndpoing,
 	}
@@ -71,6 +75,8 @@ func (p *proxy) wsRoute(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
+			p.rpcRequest(msg)
+
 			fmt.Printf("CLIENT %v\n", string(msg))
 
 			err = backend.WriteMessage(t, msg)
@@ -90,7 +96,7 @@ func (p *proxy) wsRoute(w http.ResponseWriter, r *http.Request) {
 
 			fmt.Printf("BACKEND %v\n", string(msg))
 
-			msg, err = p.process(r, msg)
+			msg, err = p.rpcResponse(r, msg)
 			if err != nil {
 				log.Print(err)
 			}
@@ -105,17 +111,53 @@ func (p *proxy) wsRoute(w http.ResponseWriter, r *http.Request) {
 	wg.Wait()
 }
 
-func (p *proxy) process(r *http.Request, msg []byte) ([]byte, error) {
+func (p *proxy) rpcRequest(msg []byte) error {
+
+	jmsg, err := ethrpc.Unmarshall(msg)
+	if err != nil {
+		return err
+	}
+
+	id, err := jmsg.GetID()
+	if err != nil {
+		return err
+	}
+
+	p.Lock()
+	p.methods[id] = jmsg.Method
+	p.Unlock()
+
+	return nil
+}
+
+func (p *proxy) rpcResponse(r *http.Request, msg []byte) ([]byte, error) {
 
 	ip, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return msg, err
 	}
 
+	fmt.Println("IP:", ip)
+
 	jmsg, err := ethrpc.Unmarshall(msg)
 	if err != nil {
 		return msg, err
 	}
+
+	id, err := jmsg.GetID()
+	if err != nil {
+		return msg, err
+	}
+
+	p.Lock()
+	method, ok := p.methods[id]
+	p.Unlock()
+
+	if !ok {
+		return msg, errors.New("unknown request ID")
+	}
+
+	jmsg.Method = method
 
 	p.call.Run(&callback.Response{
 		Body: jmsg,
