@@ -24,6 +24,7 @@ type handler struct {
 
 type Callback struct {
 	sync.Mutex
+	methods  map[uint64]string
 	id       int
 	handlers map[int]handler
 }
@@ -31,7 +32,15 @@ type Callback struct {
 func New() *Callback {
 	return &Callback{
 		handlers: make(map[int]handler),
+		methods:  make(map[uint64]string),
 	}
+}
+
+func (c *Callback) Register(id uint64, method string) {
+	c.Lock()
+	defer c.Unlock()
+
+	c.methods[id] = method
 }
 
 func (c *Callback) On(method string, f handlerFunc) int {
@@ -53,8 +62,19 @@ func (c *Callback) Run(resp *Response) {
 	c.Lock()
 	defer c.Unlock()
 
+	id, err := resp.Body.GetID()
+	if err != nil {
+		return
+	}
+
+	method, ok := c.methods[id]
+	if !ok {
+		return
+	}
+	delete(c.methods, id)
+
 	for _, h := range c.handlers {
-		if h.method == resp.Body.Method {
+		if h.method == method {
 			h.f(resp)
 		}
 	}

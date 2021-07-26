@@ -18,6 +18,7 @@ func TestBlockNumberRecord(t *testing.T) {
 		call          = callback.New()
 		r             = rpc.New(call)
 		blockN uint64 = 10
+		method        = ethrpc.BlockNumber
 	)
 
 	_, err := r.Execute(rpc.BlockNumberRecord)
@@ -27,10 +28,13 @@ func TestBlockNumberRecord(t *testing.T) {
 
 	resp := &callback.Response{
 		Body: &ethrpc.JsonrpcMessage{
-			Method: ethrpc.BlockNumber,
+			Method: method,
+			ID:     []byte("0"),
 		},
 	}
 	resp.Body.SetBlockNumber(blockN)
+
+	call.Register(0, method)
 
 	call.Run(resp)
 
@@ -46,6 +50,7 @@ func TestBlockNumberRecordCancel(t *testing.T) {
 		r             = rpc.New(call)
 		ip            = "1.0.0.0"
 		blockN uint64 = 10
+		method        = ethrpc.BlockNumber
 	)
 
 	recordID, err := r.Execute(rpc.BlockNumberRecord)
@@ -55,12 +60,14 @@ func TestBlockNumberRecordCancel(t *testing.T) {
 
 	resp := &callback.Response{
 		Body: &ethrpc.JsonrpcMessage{
-			Method: ethrpc.BlockNumber,
+			Method: method,
+			ID:     []byte("0"),
 		},
 		IP: ip,
 	}
 
 	resp.Body.SetBlockNumber(blockN)
+	call.Register(0, method)
 	call.Run(resp)
 
 	call.Cancel(recordID)
@@ -71,6 +78,7 @@ func TestBlockNumberRecordCancel(t *testing.T) {
 	}
 
 	resp.Body.SetBlockNumber(blockN + 1)
+	call.Register(0, method)
 	call.Run(resp)
 
 	if r.GetState().BlockNumber != blockN {
