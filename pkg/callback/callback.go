@@ -5,6 +5,7 @@
 package callback
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/ethersphere/ethproxy/pkg/ethrpc"
@@ -36,6 +37,7 @@ func New() *Callback {
 	}
 }
 
+// Register keeps track of the ethrpc requests with ethrpc ID to method name mapping.
 func (c *Callback) Register(id uint64, method string) {
 	c.Lock()
 	defer c.Unlock()
@@ -43,6 +45,7 @@ func (c *Callback) Register(id uint64, method string) {
 	c.methods[id] = method
 }
 
+// On adds a new callback based on an ethrpc method and returns the associated callback ID
 func (c *Callback) On(method string, f handlerFunc) int {
 	c.Lock()
 	defer c.Unlock()
@@ -52,12 +55,21 @@ func (c *Callback) On(method string, f handlerFunc) int {
 	return c.id
 }
 
-func (c *Callback) Cancel(id int) {
+// Cancel removes a callback based on an callback ID
+func (c *Callback) Cancel(id int) error {
 	c.Lock()
 	defer c.Unlock()
+
+	_, ok := c.handlers[id]
+	if !ok {
+		return errors.New("callback not found")
+	}
 	delete(c.handlers, id)
+	return nil
 }
 
+// Run, with the ID from the ethrpc response, finds the registered method name, and executes
+// all callbacks assoicated to the method.
 func (c *Callback) Run(resp *Response) {
 	c.Lock()
 	defer c.Unlock()

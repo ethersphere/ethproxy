@@ -83,7 +83,10 @@ func (api *Api) cancel(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, err)
 	}
 
-	api.call.Cancel(int(id))
+	err = api.call.Cancel(int(id))
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err)
+	}
 }
 
 func (api *Api) state(w http.ResponseWriter, r *http.Request) {
