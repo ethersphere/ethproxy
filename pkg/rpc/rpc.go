@@ -7,6 +7,7 @@ package rpc
 import (
 	"errors"
 
+	"github.com/ethersphere/bee/pkg/logging"
 	"github.com/ethersphere/ethproxy/pkg/callback"
 )
 
@@ -20,13 +21,15 @@ type State struct {
 }
 
 type Caller struct {
-	call  *callback.Callback
-	state State
+	call   *callback.Callback
+	state  State
+	logger logging.Logger
 }
 
-func New(call *callback.Callback) *Caller {
+func New(call *callback.Callback, logger logging.Logger) *Caller {
 	return &Caller{
-		call: call,
+		call:   call,
+		logger: logger,
 	}
 }
 

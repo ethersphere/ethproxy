@@ -8,6 +8,7 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/ethersphere/bee/pkg/logging"
 	"github.com/ethersphere/ethproxy/pkg/ethrpc"
 )
 
@@ -28,12 +29,14 @@ type Callback struct {
 	methods  map[uint64]string
 	id       int
 	handlers map[int]handler
+	logger   logging.Logger
 }
 
-func New() *Callback {
+func New(logger logging.Logger) *Callback {
 	return &Callback{
 		handlers: make(map[int]handler),
 		methods:  make(map[uint64]string),
+		logger:   logger,
 	}
 }
 

@@ -8,10 +8,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ethersphere/bee/pkg/logging"
 	"github.com/ethersphere/ethproxy/pkg/api"
 	"github.com/ethersphere/ethproxy/pkg/callback"
 	"github.com/ethersphere/ethproxy/pkg/ethrpc"
@@ -21,12 +23,13 @@ import (
 func TestBlockNumberFreezeForIP(t *testing.T) {
 
 	var (
-		call         = callback.New()
-		r            = rpc.New(call)
-		a            = api.NewApi(call, r)
-		ip           = "10.0.0.0"
-		id    uint64 = 0
-		block uint64 = 0
+		logger        = logging.New(ioutil.Discard, 0)
+		call          = callback.New(logger)
+		r             = rpc.New(call, logger)
+		a             = api.NewApi(call, r, logger)
+		ip            = "10.0.0.0"
+		id     uint64 = 0
+		block  uint64 = 0
 	)
 
 	// STEP X: set block number

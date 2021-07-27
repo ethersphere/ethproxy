@@ -5,8 +5,10 @@
 package rpc_test
 
 import (
+	"io/ioutil"
 	"testing"
 
+	"github.com/ethersphere/bee/pkg/logging"
 	"github.com/ethersphere/ethproxy/pkg/callback"
 	"github.com/ethersphere/ethproxy/pkg/ethrpc"
 	"github.com/ethersphere/ethproxy/pkg/rpc"
@@ -15,8 +17,9 @@ import (
 func TestBlockNumberRecord(t *testing.T) {
 
 	var (
-		call          = callback.New()
-		r             = rpc.New(call)
+		logger        = logging.New(ioutil.Discard, 0)
+		call          = callback.New(logger)
+		r             = rpc.New(call, logger)
 		blockN uint64 = 10
 		method        = ethrpc.BlockNumber
 	)
@@ -44,8 +47,9 @@ func TestBlockNumberRecord(t *testing.T) {
 func TestBlockNumberRecordCancel(t *testing.T) {
 
 	var (
-		call          = callback.New()
-		r             = rpc.New(call)
+		logger        = logging.New(ioutil.Discard, 0)
+		call          = callback.New(logger)
+		r             = rpc.New(call, logger)
 		ip            = "1.0.0.0"
 		blockN uint64 = 10
 		method        = ethrpc.BlockNumber

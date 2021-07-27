@@ -64,7 +64,7 @@ func (p *proxy) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 	defer backend.Close()
 
-	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	ip, _, _ := net.SplitHostPort(r.RemoteAddr)
 
 	var wg sync.WaitGroup
 	wg.Add(2)

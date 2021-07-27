@@ -13,6 +13,7 @@ func (c *Caller) blockNumberRecord() (int, error) {
 		if err != nil {
 			return
 		}
+		c.logger.Infof("block number update: %d", bN)
 		c.state.BlockNumber = bN
 	}), nil
 }
@@ -34,6 +35,7 @@ func (c *Caller) blockNumberFreeze(blockN uint64, params []interface{}) (int, er
 				for _, ip := range ips {
 					if resp.IP == ip {
 						resp.Body.SetBlockNumber(blockN)
+						c.logger.Infof("ip %s: frozen block number %d", ip, blockN)
 					}
 				}
 			})

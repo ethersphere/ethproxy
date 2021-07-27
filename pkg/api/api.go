@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/ethersphere/bee/pkg/logging"
 	"github.com/ethersphere/ethproxy"
 	"github.com/ethersphere/ethproxy/pkg/callback"
 	"github.com/ethersphere/ethproxy/pkg/rpc"
@@ -17,8 +18,9 @@ import (
 )
 
 type Api struct {
-	rpc  *rpc.Caller
-	call *callback.Callback
+	rpc    *rpc.Caller
+	call   *callback.Callback
+	logger logging.Logger
 }
 
 const (
@@ -30,10 +32,11 @@ const (
 	BlockNumberRecord = "blockNumberRecord"
 )
 
-func NewApi(call *callback.Callback, rpc *rpc.Caller) *Api {
+func NewApi(call *callback.Callback, rpc *rpc.Caller, logger logging.Logger) *Api {
 	return &Api{
-		rpc:  rpc,
-		call: call,
+		rpc:    rpc,
+		call:   call,
+		logger: logger,
 	}
 }
 
@@ -69,6 +72,8 @@ func (api *Api) Execute(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, err)
 		return
 	}
+
+	api.logger.Infof("execute: %s %v", msg.Method, msg.Params)
 
 	id, err := api.rpc.Execute(msg.Method, msg.Params...)
 	if err != nil {
