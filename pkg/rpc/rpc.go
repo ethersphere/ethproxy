@@ -8,7 +8,6 @@ import (
 	"errors"
 
 	"github.com/ethersphere/ethproxy/pkg/callback"
-	"github.com/ethersphere/ethproxy/pkg/ethrpc"
 )
 
 const (
@@ -33,42 +32,10 @@ func New(call *callback.Callback) *Caller {
 
 func (c *Caller) Execute(method string, params ...interface{}) (int, error) {
 	switch method {
-
 	case BlockNumberRecord:
-
-		return c.call.On(ethrpc.BlockNumber, func(resp *callback.Response) {
-			bN, err := resp.Body.BlockNumber()
-			if err != nil {
-				return
-			}
-
-			c.state.BlockNumber = bN
-		}), nil
-
+		return c.blockNumberRecord()
 	case BlockNumberFreeze:
-
-		if len(params) == 0 {
-			return c.call.On(ethrpc.BlockNumber, func(resp *callback.Response) {
-				resp.Body.SetBlockNumber(c.state.BlockNumber)
-			}), nil
-		} else {
-
-			ips, err := stringArray(params)
-			if err != nil {
-				return 0, err
-			}
-
-			return func(ips []string) int {
-				return c.call.On(ethrpc.BlockNumber, func(resp *callback.Response) {
-					for _, ip := range ips {
-						if resp.IP == ip {
-							resp.Body.SetBlockNumber(c.state.BlockNumber)
-						}
-					}
-				})
-			}(ips), nil
-		}
-
+		return c.blockNumberFreeze(c.state.BlockNumber, params)
 	default:
 		return 0, errors.New("bad method")
 	}
@@ -76,19 +43,4 @@ func (c *Caller) Execute(method string, params ...interface{}) (int, error) {
 
 func (c *Caller) GetState() State {
 	return c.state
-}
-
-func stringArray(args []interface{}) ([]string, error) {
-
-	ret := make([]string, len(args))
-
-	for _, arg := range args {
-		str, ok := arg.(string)
-		if !ok {
-			return nil, errors.New("bad param")
-		}
-		ret = append(ret, str)
-	}
-
-	return ret, nil
 }

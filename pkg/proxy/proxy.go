@@ -27,24 +27,28 @@ type proxy struct {
 	backendEndpoint string
 }
 
-func NewProxy(call *callback.Callback, port, backendEndpoing string) *http.Server {
+func NewProxy(call *callback.Callback, backendEndpoing string) *proxy {
 
-	m := http.NewServeMux()
-
-	proxy := &proxy{
+	return &proxy{
 		call:            call,
 		backendEndpoint: backendEndpoing,
 	}
+}
 
-	m.HandleFunc("/", proxy.wsRoute)
+func (p *proxy) Serve(port string) error {
+	m := http.NewServeMux()
 
-	return &http.Server{
+	m.HandleFunc("/", p.Handle)
+
+	server := &http.Server{
 		Addr:    ":" + port,
 		Handler: m,
 	}
+
+	return server.ListenAndServe()
 }
 
-func (p *proxy) wsRoute(w http.ResponseWriter, r *http.Request) {
+func (p *proxy) Handle(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -59,6 +63,8 @@ func (p *proxy) wsRoute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer backend.Close()
+
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
 
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -92,7 +98,8 @@ func (p *proxy) wsRoute(w http.ResponseWriter, r *http.Request) {
 
 			fmt.Printf("BACKEND %v\n", string(msg))
 
-			msg, err = p.rpcResponse(r, msg)
+			fmt.Println("IP:", ip)
+			msg, err = p.rpcResponse(ip, msg)
 			if err != nil {
 				log.Print(err)
 			}
@@ -124,14 +131,7 @@ func (p *proxy) rpcRequest(msg []byte) error {
 	return nil
 }
 
-func (p *proxy) rpcResponse(r *http.Request, msg []byte) ([]byte, error) {
-
-	ip, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return msg, err
-	}
-
-	fmt.Println("IP:", ip)
+func (p *proxy) rpcResponse(ip string, msg []byte) ([]byte, error) {
 
 	jmsg, err := ethrpc.Unmarshall(msg)
 	if err != nil {

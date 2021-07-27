@@ -13,6 +13,7 @@ import (
 	"github.com/ethersphere/ethproxy/pkg/api"
 	"github.com/ethersphere/ethproxy/pkg/callback"
 	"github.com/ethersphere/ethproxy/pkg/proxy"
+	"github.com/ethersphere/ethproxy/pkg/rpc"
 )
 
 func main() {
@@ -22,9 +23,10 @@ func main() {
 	backend := getEnv("PROXY_BACKEND_ENDPOINT", "ws://geth-swap:8546")
 
 	callback := callback.New()
+	rpc := rpc.New(callback)
 
-	go func() { log.Fatal(proxy.NewProxy(callback, port, backend).ListenAndServe()) }()
-	go func() { log.Fatal(api.NewServer(callback, apiPort).ListenAndServe()) }()
+	go func() { log.Fatal(proxy.NewProxy(callback, backend).Serve(port)) }()
+	go func() { log.Fatal(api.NewApi(callback, rpc).Serve(apiPort)) }()
 
 	<-waitTerminate()
 }

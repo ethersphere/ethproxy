@@ -30,26 +30,30 @@ const (
 	BlockNumberRecord = "blockNumberRecord"
 )
 
-func NewServer(call *callback.Callback, port string) *http.Server {
-
-	api := &Api{
-		rpc:  rpc.New(call),
+func NewApi(call *callback.Callback, rpc *rpc.Caller) *Api {
+	return &Api{
+		rpc:  rpc,
 		call: call,
 	}
-	r := chi.NewRouter()
+}
 
+func (api *Api) Serve(port string) error {
+
+	r := chi.NewRouter()
 	r.Get("/health", api.status)
 	r.Get("/readiness", api.status)
 	r.Get("/state", api.state)
-	r.Post("/execute", api.execute)
+	r.Post("/execute", api.Execute)
 	r.Delete("/cancel/{ID}", api.cancel)
 
 	fmt.Printf("API listing on %v\n", port)
 
-	return &http.Server{
+	server := &http.Server{
 		Addr:    ":" + port,
 		Handler: r,
 	}
+
+	return server.ListenAndServe()
 }
 
 type RpcMessage struct {
@@ -57,7 +61,7 @@ type RpcMessage struct {
 	Params []interface{} `json:"params,omitempty"`
 }
 
-func (api *Api) execute(w http.ResponseWriter, r *http.Request) {
+func (api *Api) Execute(w http.ResponseWriter, r *http.Request) {
 
 	var msg RpcMessage
 	err := json.NewDecoder(r.Body).Decode(&msg)

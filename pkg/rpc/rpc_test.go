@@ -33,9 +33,7 @@ func TestBlockNumberRecord(t *testing.T) {
 		},
 	}
 	resp.Body.SetBlockNumber(blockN)
-
 	call.Register(0, method)
-
 	call.Run(resp)
 
 	if r.GetState().BlockNumber != blockN {
