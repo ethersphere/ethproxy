@@ -5,12 +5,11 @@
 package proxy
 
 import (
-	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"sync"
 
+	"github.com/ethersphere/bee/pkg/logging"
 	"github.com/ethersphere/ethproxy/pkg/callback"
 	"github.com/ethersphere/ethproxy/pkg/ethrpc"
 	"github.com/gorilla/websocket"
@@ -25,13 +24,15 @@ var upgrader = websocket.Upgrader{
 type proxy struct {
 	call            *callback.Callback
 	backendEndpoint string
+	logger          logging.Logger
 }
 
-func NewProxy(call *callback.Callback, backendEndpoing string) *proxy {
+func NewProxy(call *callback.Callback, backendEndpoing string, logger logging.Logger) *proxy {
 
 	return &proxy{
 		call:            call,
 		backendEndpoint: backendEndpoing,
+		logger:          logger,
 	}
 }
 
@@ -52,14 +53,14 @@ func (p *proxy) Handle(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		fmt.Printf("proxy: %v\n", err)
+		p.logger.Errorf("proxy: %v\n", err)
 		return
 	}
 	defer conn.Close()
 
 	backend, err := p.backendClient()
 	if err != nil {
-		fmt.Printf("proxy: %v\n", err)
+		p.logger.Errorf("proxy: %v\n", err)
 		return
 	}
 	defer backend.Close()
@@ -79,7 +80,7 @@ func (p *proxy) Handle(w http.ResponseWriter, r *http.Request) {
 
 			p.rpcRequest(msg)
 
-			fmt.Printf("CLIENT %v\n", string(msg))
+			p.logger.Debugf("CLIENT %v\n", string(msg))
 
 			err = backend.WriteMessage(t, msg)
 			if err != nil {
@@ -96,12 +97,12 @@ func (p *proxy) Handle(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			fmt.Printf("BACKEND %v\n", string(msg))
+			p.logger.Debugf("BACKEND %v\n", string(msg))
+			p.logger.Debug("IP:", ip)
 
-			fmt.Println("IP:", ip)
 			msg, err = p.rpcResponse(ip, msg)
 			if err != nil {
-				log.Print(err)
+				p.logger.Error(err)
 			}
 
 			err = conn.WriteMessage(t, msg)

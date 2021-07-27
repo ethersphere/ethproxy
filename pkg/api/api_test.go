@@ -57,8 +57,6 @@ func TestBlockNumberFreezeForIP(t *testing.T) {
 		if bN != block-1 {
 			t.Fatalf("got %v, expected %v", bN, block-1)
 		}
-
-		fmt.Println("blockN", bN)
 	})
 
 	// STEP X: set new block number

@@ -6,7 +6,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -49,7 +48,7 @@ func (api *Api) Serve(port string) error {
 	r.Post("/execute", api.Execute)
 	r.Delete("/cancel/{ID}", api.cancel)
 
-	fmt.Printf("API listing on %v\n", port)
+	api.logger.Infof("API listing on %s\n", port)
 
 	server := &http.Server{
 		Addr:    ":" + port,

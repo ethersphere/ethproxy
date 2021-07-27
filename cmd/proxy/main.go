@@ -7,7 +7,6 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -31,8 +30,8 @@ func main() {
 	callback := callback.New(logger)
 	rpc := rpc.New(callback, logger)
 
-	go func() { log.Fatal(proxy.NewProxy(callback, backend).Serve(port)) }()
-	go func() { log.Fatal(api.NewApi(callback, rpc, logger).Serve(apiPort)) }()
+	go func() { logger.Error(proxy.NewProxy(callback, backend, logger).Serve(port)) }()
+	go func() { logger.Error(api.NewApi(callback, rpc, logger).Serve(apiPort)) }()
 
 	<-waitTerminate()
 }
