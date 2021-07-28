@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -21,19 +22,29 @@ import (
 
 func main() {
 
-	port := getEnv("PROXY_WS_PORT", "6000")
-	apiPort := getEnv("PROXY_API_PORT", "6100")
-	backend := getEnv("PROXY_BACKEND_ENDPOINT", "ws://geth-swap:8546")
-	logLevel := getEnv("PROXY_LOG_LEVEL", "info")
+	var (
+		port     = getEnv("PROXY_WS_PORT", "6000")
+		apiPort  = getEnv("PROXY_API_PORT", "6100")
+		backend  = getEnv("PROXY_BACKEND_ENDPOINT", "ws://geth-swap8546")
+		logLevel = getEnv("PROXY_LOG_LEVEL", "info")
 
-	logger, _ := newLogger(logLevel)
-	callback := callback.New(logger)
-	rpc := rpc.New(callback, logger)
+		logger, _ = newLogger(logLevel)
+		callback  = callback.New(logger)
+		rpc       = rpc.New(callback, logger)
 
-	go func() { logger.Error(proxy.NewProxy(callback, backend, logger).Serve(port)) }()
-	go func() { logger.Error(api.NewApi(callback, rpc, logger).Serve(apiPort)) }()
+		apiServer   = api.NewApi(callback, rpc, logger).Server(apiPort)
+		proxyServer = proxy.NewProxy(callback, backend, logger).Server(port)
+
+		ctx = context.Background()
+	)
+
+	go func() { apiServer.ListenAndServe() }()
+	go func() { proxyServer.ListenAndServe() }()
 
 	<-terminateChan()
+
+	apiServer.Shutdown(ctx)
+	proxyServer.Shutdown(ctx)
 }
 
 func terminateChan() <-chan os.Signal {

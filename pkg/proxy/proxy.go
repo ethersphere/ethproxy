@@ -36,17 +36,15 @@ func NewProxy(call *callback.Callback, backendEndpoing string, logger logging.Lo
 	}
 }
 
-func (p *proxy) Serve(port string) error {
+func (p *proxy) Server(port string) *http.Server {
 	m := http.NewServeMux()
 
 	m.HandleFunc("/", p.Handle)
 
-	server := &http.Server{
+	return &http.Server{
 		Addr:    ":" + port,
 		Handler: m,
 	}
-
-	return server.ListenAndServe()
 }
 
 func (p *proxy) Handle(w http.ResponseWriter, r *http.Request) {

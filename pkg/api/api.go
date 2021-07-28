@@ -39,7 +39,7 @@ func NewApi(call *callback.Callback, rpc *rpc.Caller, logger logging.Logger) *Ap
 	}
 }
 
-func (api *Api) Serve(port string) error {
+func (api *Api) Server(port string) *http.Server {
 
 	r := chi.NewRouter()
 	r.Get("/health", api.status)
@@ -50,12 +50,10 @@ func (api *Api) Serve(port string) error {
 
 	api.logger.Infof("API listing on %s", port)
 
-	server := &http.Server{
+	return &http.Server{
 		Addr:    ":" + port,
 		Handler: r,
 	}
-
-	return server.ListenAndServe()
 }
 
 type RpcMessage struct {
