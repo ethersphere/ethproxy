@@ -48,7 +48,7 @@ func (api *Api) Serve(port string) error {
 	r.Post("/execute", api.Execute)
 	r.Delete("/cancel/{ID}", api.cancel)
 
-	api.logger.Infof("API listing on %s\n", port)
+	api.logger.Infof("API listing on %s", port)
 
 	server := &http.Server{
 		Addr:    ":" + port,
@@ -72,7 +72,7 @@ func (api *Api) Execute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	api.logger.Infof("execute: %s %v", msg.Method, msg.Params)
+	api.logger.Infof("api: execute %s %v", msg.Method, msg.Params)
 
 	id, err := api.rpc.Execute(msg.Method, msg.Params...)
 	if err != nil {
@@ -90,6 +90,8 @@ func (api *Api) cancel(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err)
 	}
+
+	api.logger.Infof("api: cancel %d", id)
 
 	err = api.call.Cancel(int(id))
 	if err != nil {

@@ -33,10 +33,10 @@ func main() {
 	go func() { logger.Error(proxy.NewProxy(callback, backend, logger).Serve(port)) }()
 	go func() { logger.Error(api.NewApi(callback, rpc, logger).Serve(apiPort)) }()
 
-	<-waitTerminate()
+	<-terminateChan()
 }
 
-func waitTerminate() <-chan os.Signal {
+func terminateChan() <-chan os.Signal {
 	interruptChannel := make(chan os.Signal, 1)
 	signal.Notify(interruptChannel, syscall.SIGINT, syscall.SIGTERM)
 	return interruptChannel

@@ -40,7 +40,8 @@ func New(logger logging.Logger) *Callback {
 	}
 }
 
-// Register keeps track of the ethrpc requests with ethrpc ID to method name mapping.
+// Register keeps track of the ethrpc requests with ethrpc ID to ethrpc method name mapping.
+// It must be called before callback.Run()
 func (c *Callback) Register(id uint64, method string) {
 	c.Lock()
 	defer c.Unlock()
@@ -72,7 +73,7 @@ func (c *Callback) Cancel(id int) error {
 }
 
 // Run, with the ID from the ethrpc response, finds the registered method name, and executes
-// all callbacks assoicated to the method.
+// all callbacks associated with the method.
 func (c *Callback) Run(resp *Response) {
 	c.Lock()
 	defer c.Unlock()
