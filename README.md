@@ -51,7 +51,6 @@ Copy `beekeeper/config/local.yml` to `~/.beekeeper/local.yaml` and change `swap-
 ```bash
 beekeeper create bee-cluster --cluster-name local
 ```
-
 ### Logs
 
 ```bash
