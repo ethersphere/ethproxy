@@ -1,0 +1,25 @@
+
+imagePullSecrets:
+  - name: regcred
+
+image:
+  repository: ethersphere/ethproxy
+  tag: latest
+  pullPolicy: Always
+
+serviceAccount:
+  create: true
+
+ingress:
+  enabled: true
+  class: traefik
+  hosts:
+    - host: ethproxy.localhost
+      paths:
+          - /
+
+config:
+  PROXY_WS_PORT: "6000"
+  PROXY_API_PORT: "6100"
+  PROXY_BACKEND_ENDPOINT: "ws://geth-swap:8546"
+  PROXY_LOG_LEVEL: "info"

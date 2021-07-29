@@ -1,0 +1,22 @@
+context: ethproxy
+
+namespaces:
+  local:
+    protected: false
+
+helmRepos:
+  ethersphere: "https://ethersphere.github.io/helm"
+
+apps:
+  ethproxy:
+    name: ethproxy
+    namespace: local
+    version: "0.1.1"
+    chart: "ethersphere/ethproxy"
+    description: "ethproxy"
+    priority: -10
+    enabled: true
+    valuesFiles:
+      - "helm-values/ethproxy.yaml"
+
+  
