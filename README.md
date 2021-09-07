@@ -26,10 +26,15 @@ record or alter the `block number` of the chain, a json RPC call may be sent to 
 POST /execute
 {"method": "blockNumberRecord"}
 ```
+
+This command will cause the proxy to start recording the eth block number as responses to block number requests are proxied. This request is required to run before the `blockNumberFreeze` can be called, otherwise, nodes will be frozen at block number `0`. 
+
 ```
 POST /execute
 {"method": "blockNumberFreeze", "params": ["some-ip4-address"]}}
 ```
+
+If an IP address is provided, the node with that IP, when it queries the current eth block number, will receive the block number that was recorded at the time when this command was executed. Executing this command without `params` will cause all nodes to receive the old block number.
 
 To get the ip address of a Bee node, you may query the debug api at `/addresses` and use the public ip4 address.
 
