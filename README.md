@@ -1,6 +1,6 @@
 # Ethereum Backend Proxy
 
-To run the example client, proxy, and backend:
+To locally run the example client, proxy, and backend:
 
 - `make binary`
 - `./dist/backend`
@@ -28,8 +28,23 @@ POST /execute
 ```
 ```
 POST /execute
-{"method": "blockNumberFreeze"}
+{"method": "blockNumberFreeze", "params": ["some-ip4-address"]}}
 ```
+
+To get the ip address of a Bee node, you may query the debug api at `/addresses` and use the public ip4 address.
+
+To cancel the above executions, grab the id in the response and cancel it as such:
+```
+DELETE /cancel/{id}
+```
+
+Example commands:
+```
+curl --data '{"method": "blockNumberRecord"}' ethproxy.localhost/execute
+curl --data '{"method": "blockNumberFreeze", "params": ["10.42.0.37"]}' ethproxy.localhost/execute
+curl -X DELETE ethproxy.localhost/cancel/5
+```
+
 
 ## Deployment
 

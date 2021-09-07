@@ -25,7 +25,7 @@ func main() {
 	var (
 		port     = getEnv("PROXY_WS_PORT", "6000")
 		apiPort  = getEnv("PROXY_API_PORT", "6100")
-		backend  = getEnv("PROXY_BACKEND_ENDPOINT", "ws://geth-swap8546")
+		backend  = getEnv("PROXY_BACKEND_ENDPOINT", "ws://geth-swap:8546")
 		logLevel = getEnv("PROXY_LOG_LEVEL", "info")
 
 		logger, _ = newLogger(logLevel)
