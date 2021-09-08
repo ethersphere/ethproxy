@@ -1,5 +1,7 @@
 # Ethereum Backend Proxy
 
+Ethproxy is a websocket reverse proxy for ethereum JsonRPC calls. It can log response and requests for debugging and observability. It also features an internal state that can be interacted with by running rpc methods listed below.  
+
 To locally run the example client, proxy, and backend:
 
 - `make binary`
@@ -44,14 +46,14 @@ DELETE /cancel/{id}
 ```
 
 Example commands:
-```
+```bash
 curl --data '{"method": "blockNumberRecord"}' ethproxy.localhost/execute
 curl --data '{"method": "blockNumberFreeze", "params": ["10.42.0.37"]}' ethproxy.localhost/execute
 curl -X DELETE ethproxy.localhost/cancel/5
 ```
 
 
-## Deployment
+## Deployment and Testing Locally
 
 ### ethersphere/beelocal
 ```bash
