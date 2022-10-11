@@ -30,7 +30,6 @@ func NewBackend() *http.Server {
 }
 
 func serverRoute(w http.ResponseWriter, r *http.Request) {
-
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Printf("server: %v\n", err)

@@ -13,7 +13,6 @@ import (
 )
 
 func main() {
-
 	conn, _, err := websocket.DefaultDialer.Dial("ws://:6000", nil)
 	if err != nil {
 		log.Fatal(err)

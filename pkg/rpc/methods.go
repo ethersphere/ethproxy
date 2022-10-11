@@ -44,7 +44,6 @@ func (c *Caller) blockNumberFreeze(blockN uint64, params []interface{}) (int, er
 }
 
 func stringArray(args []interface{}) ([]string, error) {
-
 	ret := make([]string, len(args))
 
 	for _, arg := range args {

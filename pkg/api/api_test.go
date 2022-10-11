@@ -13,7 +13,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/ethersphere/bee/pkg/logging"
+	"github.com/ethersphere/beekeeper/pkg/logging"
 	"github.com/ethersphere/ethproxy/pkg/api"
 	"github.com/ethersphere/ethproxy/pkg/callback"
 	"github.com/ethersphere/ethproxy/pkg/ethrpc"
@@ -21,9 +21,8 @@ import (
 )
 
 func TestBlockNumberFreezeForIP(t *testing.T) {
-
 	var (
-		logger        = logging.New(ioutil.Discard, 0)
+		logger        = logging.New(ioutil.Discard, 0, "")
 		call          = callback.New(logger)
 		r             = rpc.New(call, logger)
 		a             = api.NewApi(call, r, logger)
@@ -97,7 +96,6 @@ func doRequest(t *testing.T, h http.Handler, req, res interface{}) {
 			t.Fatalf("decode response: %v", err)
 		}
 	}
-
 }
 
 // func ethBlockNumberReq(id int) []byte {

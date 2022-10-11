@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/ethersphere/bee/pkg/logging"
+	"github.com/ethersphere/beekeeper/pkg/logging"
 	"github.com/ethersphere/ethproxy/pkg/callback"
 	"github.com/ethersphere/ethproxy/pkg/ethrpc"
 	"github.com/gorilla/websocket"
@@ -28,7 +28,6 @@ type proxy struct {
 }
 
 func NewProxy(call *callback.Callback, backendEndpoing string, logger logging.Logger) *proxy {
-
 	return &proxy{
 		call:            call,
 		backendEndpoint: backendEndpoing,
@@ -48,7 +47,6 @@ func (p *proxy) Server(port string) *http.Server {
 }
 
 func (p *proxy) Handle(w http.ResponseWriter, r *http.Request) {
-
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		p.logger.Errorf("proxy: %v", err)
@@ -114,7 +112,6 @@ func (p *proxy) Handle(w http.ResponseWriter, r *http.Request) {
 }
 
 func (p *proxy) rpcRequest(msg []byte) error {
-
 	jmsg, err := ethrpc.Unmarshall(msg)
 	if err != nil {
 		return err
@@ -131,7 +128,6 @@ func (p *proxy) rpcRequest(msg []byte) error {
 }
 
 func (p *proxy) rpcResponse(ip string, msg []byte) ([]byte, error) {
-
 	jmsg, err := ethrpc.Unmarshall(msg)
 	if err != nil {
 		return msg, err
