@@ -7,7 +7,7 @@ package ethproxy
 var CommitTime string
 
 var (
-	version = "1.0.0" // manually set semantic version number
+	version = "0.0.4" // manually set semantic version number
 	commit  string    // automatically set git commit hash
 
 	Version = func() string {

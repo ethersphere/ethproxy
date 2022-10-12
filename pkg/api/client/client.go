@@ -36,7 +36,6 @@ func NewClient(endpoint string) *Client {
 }
 
 func (c *Client) Execute(method string, params ...interface{}) (int, error) {
-
 	b, err := json.Marshal(api.RpcMessage{
 		Method: method,
 		Params: params,
@@ -60,7 +59,7 @@ func (c *Client) Execute(method string, params ...interface{}) (int, error) {
 		return 0, ErrStatusNotOK
 	}
 
-	var idmap = make(map[string]int)
+	idmap := make(map[string]int)
 	err = json.NewDecoder(res.Body).Decode(&idmap)
 	if err != nil {
 		return 0, err
@@ -70,7 +69,6 @@ func (c *Client) Execute(method string, params ...interface{}) (int, error) {
 }
 
 func (c *Client) Cancel(id int) error {
-
 	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/cancel/%d", c.endpoint, id), nil)
 	if err != nil {
 		return err
@@ -90,7 +88,6 @@ func (c *Client) Cancel(id int) error {
 }
 
 func (c *Client) State() (*rpc.State, error) {
-
 	req, err := http.NewRequest("GET", c.endpoint+"/state", nil)
 	if err != nil {
 		return nil, err

@@ -12,7 +12,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ethersphere/bee/pkg/logging"
+	"github.com/ethersphere/beekeeper/pkg/logging"
 	"github.com/ethersphere/ethproxy/pkg/api"
 	"github.com/ethersphere/ethproxy/pkg/callback"
 	"github.com/ethersphere/ethproxy/pkg/proxy"
@@ -21,7 +21,6 @@ import (
 )
 
 func main() {
-
 	var (
 		port     = getEnv("PROXY_WS_PORT", "6000")
 		apiPort  = getEnv("PROXY_API_PORT", "6100")
@@ -64,17 +63,17 @@ func newLogger(verbosity string) (logging.Logger, error) {
 	var logger logging.Logger
 	switch verbosity {
 	case "0", "silent":
-		logger = logging.New(ioutil.Discard, 0)
+		logger = logging.New(ioutil.Discard, 0, "")
 	case "1", "error":
-		logger = logging.New(os.Stdout, logrus.ErrorLevel)
+		logger = logging.New(os.Stdout, logrus.ErrorLevel, "")
 	case "2", "warn":
-		logger = logging.New(os.Stdout, logrus.WarnLevel)
+		logger = logging.New(os.Stdout, logrus.WarnLevel, "")
 	case "3", "info":
-		logger = logging.New(os.Stdout, logrus.InfoLevel)
+		logger = logging.New(os.Stdout, logrus.InfoLevel, "")
 	case "4", "debug":
-		logger = logging.New(os.Stdout, logrus.DebugLevel)
+		logger = logging.New(os.Stdout, logrus.DebugLevel, "")
 	case "5", "trace":
-		logger = logging.New(os.Stdout, logrus.TraceLevel)
+		logger = logging.New(os.Stdout, logrus.TraceLevel, "")
 	default:
 		return nil, fmt.Errorf("unknown verbosity level %q", verbosity)
 	}

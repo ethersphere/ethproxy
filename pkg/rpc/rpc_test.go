@@ -8,16 +8,15 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/ethersphere/bee/pkg/logging"
+	"github.com/ethersphere/beekeeper/pkg/logging"
 	"github.com/ethersphere/ethproxy/pkg/callback"
 	"github.com/ethersphere/ethproxy/pkg/ethrpc"
 	"github.com/ethersphere/ethproxy/pkg/rpc"
 )
 
 func TestBlockNumberRecord(t *testing.T) {
-
 	var (
-		logger        = logging.New(ioutil.Discard, 0)
+		logger        = logging.New(ioutil.Discard, 0, "")
 		call          = callback.New(logger)
 		r             = rpc.New(call, logger)
 		blockN uint64 = 10
@@ -45,9 +44,8 @@ func TestBlockNumberRecord(t *testing.T) {
 }
 
 func TestBlockNumberRecordCancel(t *testing.T) {
-
 	var (
-		logger        = logging.New(ioutil.Discard, 0)
+		logger        = logging.New(ioutil.Discard, 0, "")
 		call          = callback.New(logger)
 		r             = rpc.New(call, logger)
 		ip            = "1.0.0.0"

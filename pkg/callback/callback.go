@@ -8,7 +8,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/ethersphere/bee/pkg/logging"
+	"github.com/ethersphere/beekeeper/pkg/logging"
 	"github.com/ethersphere/ethproxy/pkg/ethrpc"
 )
 

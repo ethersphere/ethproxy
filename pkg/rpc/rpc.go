@@ -7,7 +7,7 @@ package rpc
 import (
 	"errors"
 
-	"github.com/ethersphere/bee/pkg/logging"
+	"github.com/ethersphere/beekeeper/pkg/logging"
 	"github.com/ethersphere/ethproxy/pkg/callback"
 )
 

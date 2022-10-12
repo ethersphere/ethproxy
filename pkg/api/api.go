@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/ethersphere/bee/pkg/logging"
+	"github.com/ethersphere/beekeeper/pkg/logging"
 	"github.com/ethersphere/ethproxy"
 	"github.com/ethersphere/ethproxy/pkg/callback"
 	"github.com/ethersphere/ethproxy/pkg/rpc"
@@ -40,7 +40,6 @@ func NewApi(call *callback.Callback, rpc *rpc.Caller, logger logging.Logger) *Ap
 }
 
 func (api *Api) Server(port string) *http.Server {
-
 	r := chi.NewRouter()
 	r.Get("/health", api.status)
 	r.Get("/readiness", api.status)
@@ -62,7 +61,6 @@ type RpcMessage struct {
 }
 
 func (api *Api) Execute(w http.ResponseWriter, r *http.Request) {
-
 	var msg RpcMessage
 	err := json.NewDecoder(r.Body).Decode(&msg)
 	if err != nil {
@@ -82,7 +80,6 @@ func (api *Api) Execute(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *Api) cancel(w http.ResponseWriter, r *http.Request) {
-
 	idStr := chi.URLParam(r, "ID")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
@@ -114,7 +111,6 @@ func (api *Api) status(w http.ResponseWriter, r *http.Request) {
 }
 
 func respond(w http.ResponseWriter, body interface{}) error {
-
 	w.Header().Set("Content-Type", JSONContent)
 
 	b, err := json.Marshal(body)
@@ -127,7 +123,6 @@ func respond(w http.ResponseWriter, body interface{}) error {
 }
 
 func respondError(w http.ResponseWriter, status int, err error) error {
-
 	w.WriteHeader(status)
 	return respond(w, map[string]string{"error": err.Error()})
 }
