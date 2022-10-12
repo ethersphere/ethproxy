@@ -1,4 +1,4 @@
-FROM golang:1.15 AS build
+FROM golang:1.18 AS build
 
 WORKDIR /src
 
@@ -8,7 +8,7 @@ COPY . ./
 
 RUN make binary
 
-FROM debian:10.10-slim
+FROM debian:11.5-slim
 
 ENV DEBIAN_FRONTEND noninteractive
 
